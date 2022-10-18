@@ -58,7 +58,7 @@ apiportal_docker_build_web() {
     [user]='root'
     [pass]="${apiportal_docker[db_pass]}"
   )
-  local tag=dev
+  local tag="dev.$(date +%Y%m%d)"
   local name="${apiportal_docker[img_name_web]}"
 
   _apiportal_docker_build_trap_help apiportal_docker_build_web "${tag}" "${@}" && return
@@ -70,7 +70,7 @@ apiportal_docker_build_web() {
   (
     cd.docker
     set -x
-    docker image build --network host -t "${name}:${tag}" \
+    docker image build -t "${name}:${tag}" --network host \
       --build-arg MYSQL_HOST="${db[host]}" \
       --build-arg MYSQL_PORT="${db[port]}" \
       --build-arg MYSQL_DATABASE="${db[name]}" \
@@ -79,9 +79,11 @@ apiportal_docker_build_web() {
       -f dockerfiles/web.Dockerfile .
   ) 2> >(
     sed -e 's/\( --build-arg MYSQL_PASSWORD=\)[^ ]\+/\1*****/g' \
-      -e 's/\( --build-arg MYSQL_HOST=\)[^ ]\+/\1*****/g' >/dev/stderr
+      -e 's/\( --build-arg MYSQL_HOST=\)[^ ]\+/\1*****/g' \
+      -e 's/\( build -t \)[^\/]\+/\1*****/g' >/dev/stderr
   ) \
-  | sed -e 's/\(ARG APIPORTAL_BASE_IMG=\)[^\/]\+/\1*****/g'
+  | sed -e 's/\(ARG APIPORTAL_BASE_IMG=\)[^\/]\+/\1*****/g' \
+    -e 's/^\(Successfully tagged \)[^\/]\+/\1*****/g'
 }
 
 apiportal_genconf() {
