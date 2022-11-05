@@ -16,9 +16,42 @@ alias ssh.vpn1="_homelab_connect ssh vpn1"
 alias et.pve1="_homelab_connect et pve1"
 alias et.vpn1="_homelab_connect et vpn1"
 
+homelab_genconf() {
+  _homelab_genconf_trap_help "${@}" && return 0
+
+  local self="${BASH_SOURCE[0]}"
+  (
+    typeset -F _envar_tag_node_get \
+    && typeset -F _envar_file2dest \
+    && typeset -F _envar_template_compile
+  ) >/dev/null || return 1
+
+  local conf; conf="$(
+    cat "${self}" \
+    | _envar_tag_node_get --prefix '# @' --strip -- CONF \
+    | sed 's/^# \?//' \
+    | _envar_template_compile --secrets-path "$(_homelab_secrets_path)"
+  )"
+
+  _envar_file2dest --tag HOMELAB_CONF --tag-prefix '#' \
+    -- <(cat <<< "${conf}" ) "${@}"
+}
+
 #
 # PRIVATES
 #
+
+_homelab_genconf_trap_help() {
+  [[ "${1}" =~ ^(-h|-\?|--help)$ ]] && {
+    echo "USAGE:"
+    echo "  homelab_genconf [DEST...]"
+    echo
+    echo "Default DEST is stdout"
+    return 0
+  }
+
+  return 1
+}
 
 _homelab_connect() {
   _homelab_connect_trap_help "${@}" && return $?
