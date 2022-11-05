@@ -1,0 +1,8 @@
+/*
+
+# only track these items
+!/spaces
+!/secrets
+!/.editorconfig
+!/.gitignore
+!/readme.md
